@@ -1,0 +1,26 @@
+Test Document for Verification
+
+This is a test document used to verify that the AI Document Helper system is working correctly.
+
+Key Information:
+- The system should be able to index this document
+- The system should be able to retrieve relevant information from this document
+- The system should be able to answer questions about this document
+
+Test Questions:
+1. What is the purpose of this document?
+2. What are the key information points mentioned?
+3. How many test questions are listed?
+
+Expected Behavior:
+When asked about the purpose of this document, the AI should respond that it is a test document used to verify the system is working correctly.
+
+System Components to Test:
+- Document upload functionality
+- Document processing and chunking
+- Embedding generation
+- Vector database storage
+- Retrieval system
+- Question answering capability
+
+This document contains enough text to be split into multiple chunks, allowing us to test the chunking and retrieval mechanisms effectively.

@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # Vector Database for document embeddings
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - ai_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - OLLAMA_HOST=ollama
+      - OLLAMA_PORT=11434
+    volumes:
+      - ./backend:/app
+      - ./data:/data
+      - ./models:/models
+    depends_on:
+      - qdrant
+      - ollama
+    networks:
+      - ai_network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Ollama for local LLM
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - ai_network
+
+  # Frontend UI
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - ai_network
+    stdin_open: true
+    tty: true
+
+  # MLOps Training Pipeline
+  mlops:
+    build:
+      context: ./mlops
+      dockerfile: Dockerfile
+    container_name: ai_mlops
+    environment:
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - OLLAMA_HOST=ollama
+      - OLLAMA_PORT=11434
+    volumes:
+      - ./mlops:/app
+      - ./data:/data
+      - ./models:/models
+    depends_on:
+      - qdrant
+      - ollama
+    networks:
+      - ai_network
+    profiles:
+      - training
+
+networks:
+  ai_network:
+    driver: bridge
+
+volumes:
+  qdrant_data:
+  ollama_data:
