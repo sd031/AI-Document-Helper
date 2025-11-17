@@ -236,10 +236,22 @@ Answer:"""
     async def get_stats(self) -> Dict:
         """Get statistics about the vector database"""
         try:
-            collection_info = self.qdrant_client.get_collection(self.collection_name)
+            # Use HTTP API directly to avoid Pydantic validation issues
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"http://{self.qdrant_host}:{self.qdrant_port}/collections/{self.collection_name}"
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    points_count = data.get("result", {}).get("points_count", 0)
+                    return {
+                        "total_documents": points_count,
+                        "vector_dimension": self.embedding_dim,
+                        "collection_name": self.collection_name
+                    }
             
             return {
-                "total_documents": collection_info.points_count,
+                "total_documents": 0,
                 "vector_dimension": self.embedding_dim,
                 "collection_name": self.collection_name
             }
